@@ -94,8 +94,6 @@ if (bind (sock, (struct sockaddr *) &sll, sizeof (sll)) == -1) {
 	return 1;
 }
 
-printf("ether + ip = %lu\n", sizeof(struct ether_header) + sizeof(struct ipv4_header));
-
 buff = (char*) malloc (ETH_FRAME_LEN); 
 
 while (1) {
@@ -106,14 +104,14 @@ while (1) {
 	data_packet = (struct ether_header *) buff;
 
 	printf ("Packet size: %ld \n", rec);
-	
+
 	printf ("Destination MAC: ");
 	for (i = 0; i < 6; i++){
 		printf ("%.2hhX ", data_packet->dest_mac[i]);
 	}
 	printf ("\n");
 
-	
+
 	printf ("Source MAC: ");
 	for (i = 0; i < 6; i++) {
 		printf ("%.2hhX ", data_packet->src_mac[i]);
@@ -123,8 +121,8 @@ while (1) {
 
 	for (i = 0; i < 4; i++) {
 		if (table_of_types_ll[i].type ==  ntohs(data_packet->eth_type)) {
-		printf ("EtherType: %#.4x is %s\n", ntohs(data_packet->eth_type), table_of_types_ll[i].string);
-		break;
+			printf ("EtherType: %#.4x is %s\n", ntohs(data_packet->eth_type), table_of_types_ll[i].string);
+			break;
 		}
 	}
 
@@ -156,7 +154,7 @@ while (1) {
 		printf ("Header checksum: %hu \n", ntohs(data_ipv4->header_checksum));
 		printf ("Source IP address: %s \n", inet_ntoa (ip_source_struct));
 		printf ("Destination IP address: %s \n", inet_ntoa(ip_dest_struct));
-		printf ("Options: %u \n", IPV4_OPTIONS ((data_ipv4->version_header_size & 0xF), ntohs(data_ipv4->options)));
+		printf ("Options: %x \n", IPV4_OPTIONS ((data_ipv4->version_header_size & 0xF), ntohl(data_ipv4->options)));
 
 		/* Transport layer */
 		for (i = 0; i < 7; i++) {
@@ -166,22 +164,28 @@ while (1) {
 
 				printf ("Source port: %hu \n", ntohs (data_tcp->source_port));
 				printf ("Destination port: %hu \n", ntohs (data_tcp->dest_port));
-				printf ("Sequence number: %u \n", ntohs (data_tcp->seq_num));
-				printf ("Acknoulegement number: %u \n", ntohs (data_tcp->ack_num));
-				printf ("Data offset: %hu \n", (data_tcp->data_offset_reserved >> 4));
-				printf ("Reserved: %hu \n", data_tcp->data_offset_reserved & 0xF);
-				printf ("TCP layer flags: %u \n", data_tcp->tcp_flags);
-				printf ("Window size: %u \n", ntohs(data_tcp->win_size));
-				printf ("Checksum: %hhu \n", ntohs (data_tcp->checksum));
-				printf ("Urgent pointer: %hhu \n", ntohs(data_tcp->urg_pointer));
-				printf ("Options: %u \n", ntohs(data_tcp->options));
+
+				if (data_ipv4->protocol == 6) {
+
+					printf ("Sequence number: %u \n", ntohl (data_tcp->seq_num));
+					printf ("Acknoulegement number: %u \n", ntohl (data_tcp->ack_num));
+					printf ("Data offset: %hhu \n", (data_tcp->data_offset_reserved >> 4));
+					printf ("Reserved: %hhu \n", data_tcp->data_offset_reserved & 0xF);
+					printf ("TCP layer flags: %u \n", data_tcp->tcp_flags);
+					printf ("Window size: %u \n", ntohs(data_tcp->win_size));
+					printf ("Checksum: %hu \n", ntohs (data_tcp->checksum));
+					printf ("Urgent pointer: %hu \n", ntohs(data_tcp->urg_pointer));
+					printf ("Options: %u \n", ntohs(data_tcp->options));
+				}
+
 			}
-	}
-}
 
-	printf ("\n \n");
-}
+		}
 
+
+	} 
+		printf ("\n \n");
+}
 free (buff); 
 
 return 0;
